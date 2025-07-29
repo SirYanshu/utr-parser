@@ -365,13 +365,39 @@
             const parser = new DOMParser();
             const doc = parser.parseFromString(htmlContent, 'text/html');
             
-            const divs = doc.querySelectorAll('div.utr-card.score-card.false');
+            // Primary selector based on your debug output
+            let divs = doc.querySelectorAll('div.utr-card.score-card.false');
+            console.log(`Found ${divs.length} match containers with primary selector`);
+            
+            // Fallback selectors if needed
+            if (divs.length === 0) {
+                divs = doc.querySelectorAll('div.score-card');
+                console.log(`Fallback: Found ${divs.length} with .score-card`);
+            }
+            
+            if (divs.length === 0) {
+                divs = doc.querySelectorAll('div.utr-card');
+                console.log(`Fallback: Found ${divs.length} with .utr-card`);
+            }
+            
+            // Debug: Check for key elements
+            const playerNames = doc.querySelectorAll('a.player-name');
+            const utrRatings = doc.querySelectorAll('div.utr');
+            const teamDivs = doc.querySelectorAll('div.team.aic');
+            const dates = doc.querySelectorAll('span.scorecard__dateTimeText__1n0hM');
+            
+            console.log(`Debug counts - Players: ${playerNames.length}, UTRs: ${utrRatings.length}, Teams: ${teamDivs.length}, Dates: ${dates.length}`);
+            
             const data = [];
             
-            divs.forEach(div => {
+            divs.forEach((div, index) => {
                 const teamDivs = div.querySelectorAll('div.team.aic');
+                console.log(`Match ${index + 1}: Found ${teamDivs.length} teams`);
                 
-                if (teamDivs.length === 0) return;
+                if (teamDivs.length === 0) {
+                    console.log(`Match ${index + 1}: No team divs found, skipping`);
+                    return;
+                }
                 
                 const match = [];
                 
@@ -379,6 +405,7 @@
                 const dateDiv = div.querySelector('span.scorecard__dateTimeText__1n0hM');
                 if (dateDiv) {
                     const dateString = dateDiv.textContent.trim();
+                    console.log(`Match ${index + 1}: Date string: "${dateString}"`);
                     const dateParts = dateString.split('|');
                     if (dateParts.length >= 2) {
                         const timePart = dateParts[0].trim();
@@ -386,39 +413,55 @@
                         const matchDate = `${datePart} ${timePart}`;
                         match.push(matchDate);
                     } else {
-                        match.push('Unknown Date');
+                        match.push(dateString || 'Unknown Date');
                     }
                 } else {
+                    console.log(`Match ${index + 1}: No date found`);
                     match.push('');
                 }
                 
-                teamDivs.forEach(teamDiv => {
+                teamDivs.forEach((teamDiv, teamIndex) => {
                     const thisResult = [];
                     
                     // Get player name
                     const playerNameEl = teamDiv.querySelector('a.player-name');
                     if (playerNameEl) {
-                        thisResult.push(playerNameEl.textContent.trim());
+                        const playerName = playerNameEl.textContent.trim();
+                        thisResult.push(playerName);
+                        console.log(`Match ${index + 1}, Team ${teamIndex + 1}: Player "${playerName}"`);
+                    } else {
+                        console.log(`Match ${index + 1}, Team ${teamIndex + 1}: No player name found`);
+                        thisResult.push('Unknown Player');
                     }
                     
                     // Get player UTR
                     const playerUtrEl = teamDiv.querySelector('div.utr');
                     if (playerUtrEl) {
-                        thisResult.push(playerUtrEl.textContent.trim());
+                        const utr = playerUtrEl.textContent.trim();
+                        thisResult.push(utr);
+                        console.log(`Match ${index + 1}, Team ${teamIndex + 1}: UTR "${utr}"`);
+                    } else {
+                        console.log(`Match ${index + 1}, Team ${teamIndex + 1}: No UTR found`);
+                        thisResult.push('N/A');
                     }
                     
                     // Get scores
                     const scoresContainers = teamDiv.querySelectorAll('div.scores-conatiner');
                     const gameScores = [];
                     
-                    scoresContainers.forEach(scoreDiv => {
+                    console.log(`Match ${index + 1}, Team ${teamIndex + 1}: Found ${scoresContainers.length} score containers`);
+                    
+                    scoresContainers.forEach((scoreDiv, scoreIndex) => {
                         const scoreItems = scoreDiv.querySelectorAll('div.score-item');
+                        console.log(`Match ${index + 1}, Team ${teamIndex + 1}, Container ${scoreIndex + 1}: Found ${scoreItems.length} score items`);
+                        
                         scoreItems.forEach(item => {
                             let score = item.textContent.trim();
                             if (score.length > 1) {
                                 score = score[0];
                             }
                             gameScores.push(score);
+                            console.log(`Score: "${score}"`);
                         });
                     });
                     
@@ -426,8 +469,11 @@
                     match.push(thisResult);
                 });
                 
-                if (match.length > 0) {
+                if (match.length > 1) { // Must have date + at least one team
                     data.push(match);
+                    console.log(`Match ${index + 1}: Added to results`);
+                } else {
+                    console.log(`Match ${index + 1}: Not enough data, skipping`);
                 }
             });
             
