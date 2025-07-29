@@ -1,36 +1,38 @@
 🎾 UTR Tennis Match Parser
+
 A simple web tool that converts UTR (Universal Tennis Rating) HTML files into organized CSV spreadsheets containing all your match data.
+
 What Does This Tool Do?
+
 The UTR Parser extracts tennis match information from UTR HTML files and converts it into a clean, organized CSV file that you can open in Excel, Google Sheets, or any spreadsheet application.
 
 How to Use
+
 Step 1: Get Your UTR HTML File
 
-Go to your UTR profile on the UTR website
-Navigate to your match history/results page
-Save the page as an HTML file:
+- Go to your UTR profile on the UTR website
+- Navigate to your match history/results page
+- Save the page as an HTML file:
 
-Chrome/Edge: Right-click → "Save as" → Choose "Webpage, Complete"
-Firefox: Right-click → "Save Page As" → Choose "Web Page, complete"
-Safari: File menu → "Save As" → Choose "Web Archive"
-
-
+  Chrome/Edge: Right-click → "Save as" → Choose "Webpage, Complete"
+  Firefox: Right-click → "Save Page As" → Choose "Web Page, complete"
+  Safari: File menu → "Save As" → Choose "Web Archive"
 
 Step 2: Upload and Parse
 
-Visit the UTR Parser website
-Click the upload area or drag your HTML file onto it
-Click "Parse & Download CSV"
-Your CSV file will automatically download
+- Visit the UTR Parser website
+- Click the upload area or drag your HTML file onto it
+- Click "Parse & Download CSV". Your CSV file will automatically download
 
 Step 3: View Your Results
-Open the downloaded CSV file in any spreadsheet application to see your organized match data.
-What Information Gets Extracted?
-The CSV file contains three columns:
+- Open the downloaded CSV file in any spreadsheet application to see your organized match data.
 
-Date: When the match was played (date and time)
-Player: Your information including name, UTR rating, and set scores
-Opponent: Opponent's information including name, UTR rating, and set scores
+What Information Gets Extracted?
+
+The CSV file contains three columns:
+- Date: When the match was played (date and time)
+- Player: Your information including name, UTR rating, and set scores
+- Opponent: Opponent's information including name, UTR rating, and set scores
 
 Example Output:
 ```
