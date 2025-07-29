@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UTR Tennis Match Parser</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+            width: 100%;
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+        
+        .container:hover {
+            transform: translateY(-5px);
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+            font-weight: 700;
+        }
+        
+        .subtitle {
+            color: #666;
+            margin-bottom: 40px;
+            font-size: 1.1em;
+            line-height: 1.5;
+        }
+        
+        .upload-area {
+            border: 3px dashed #667eea;
+            border-radius: 15px;
+            padding: 60px 20px;
+            margin-bottom: 30px;
+            background: linear-gradient(45deg, rgba(102, 126, 234, 0.05), rgba(118, 75, 162, 0.05));
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .upload-area:hover {
+            border-color: #764ba2;
+            background: linear-gradient(45deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+            transform: scale(1.02);
+        }
+        
+        .upload-area.dragover {
+            border-color: #4CAF50;
+            background: rgba(76, 175, 80, 0.1);
+        }
+        
+        .upload-icon {
+            font-size: 4em;
+            color: #667eea;
+            margin-bottom: 20px;
+            display: block;
+        }
+        
+        .upload-text {
+            font-size: 1.3em;
+            color: #333;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+        
+        .upload-subtext {
+            color: #666;
+            font-size: 0.9em;
+        }
+        
+        #fileInput {
+            display: none;
+        }
+        
+        .btn {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 50px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 30px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .loading {
+            display: none;
+            margin: 20px 0;
+        }
+        
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .result {
+            display: none;
+            margin-top: 30px;
+            padding: 20px;
+            background: rgba(76, 175, 80, 0.1);
+            border-radius: 10px;
+            border-left: 5px solid #4CAF50;
+        }
+        
+        .error {
+            display: none;
+            margin-top: 30px;
+            padding: 20px;
+            background: rgba(244, 67, 54, 0.1);
+            border-radius: 10px;
+            border-left: 5px solid #f44336;
+            color: #d32f2f;
+        }
+        
+        .file-info {
+            display: none;
+            margin: 20px 0;
+            padding: 15px;
+            background: rgba(102, 126, 234, 0.1);
+            border-radius: 10px;
+            color: #333;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 20px 0;
+            display: none;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            width: 0%;
+            transition: width 0.3s ease;
+            animation: shimmer 2s infinite;
+        }
+        
+        @keyframes shimmer {
+            0% { background-position: -200px 0; }
+            100% { background-position: 200px 0; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎾 UTR Parser</h1>
+        <p class="subtitle">Upload your UTR HTML file and get a clean CSV with all match results</p>
+        
+        <div class="upload-area" id="uploadArea">
+            <div class="upload-icon">📁</div>
+            <div class="upload-text">Click to upload or drag & drop</div>
+            <div class="upload-subtext">HTML files only</div>
+        </div>
+        
+        <input type="file" id="fileInput" accept=".html,.htm" />
+        
+        <div class="file-info" id="fileInfo">
+            <strong>Selected:</strong> <span id="fileName"></span>
+        </div>
+        
+        <div class="progress-bar" id="progressBar">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+        
+        <button class="btn" id="parseBtn" onclick="parseFile()" disabled>
+            Parse & Download CSV
+        </button>
+        
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Processing your file...</p>
+        </div>
+        
+        <div class="result" id="result">
+            <h3>✅ Success!</h3>
+            <p id="resultText"></p>
+        </div>
+        
+        <div class="error" id="error">
+            <h3>❌ Error</h3>
+            <p id="errorText"></p>
+        </div>
+    </div>
+
+    <script>
+        let selectedFile = null;
+        
+        // File upload handling
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const parseBtn = document.getElementById('parseBtn');
+        const fileInfo = document.getElementById('fileInfo');
+        const fileName = document.getElementById('fileName');
+        
+        uploadArea.addEventListener('click', () => fileInput.click());
+        
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+        
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+        
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFile(files[0]);
+            }
+        });
+        
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFile(e.target.files[0]);
+            }
+        });
+        
+        function handleFile(file) {
+            if (!file.name.toLowerCase().endsWith('.html') && !file.name.toLowerCase().endsWith('.htm')) {
+                showError('Please select an HTML file.');
+                return;
+            }
+            
+            selectedFile = file;
+            fileName.textContent = file.name;
+            fileInfo.style.display = 'block';
+            parseBtn.disabled = false;
+            hideMessages();
+        }
+        
+        function hideMessages() {
+            document.getElementById('result').style.display = 'none';
+            document.getElementById('error').style.display = 'none';
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('progressBar').style.display = 'none';
+        }
+        
+        function showError(message) {
+            hideMessages();
+            document.getElementById('errorText').textContent = message;
+            document.getElementById('error').style.display = 'block';
+        }
+        
+        function showResult(message) {
+            hideMessages();
+            document.getElementById('resultText').textContent = message;
+            document.getElementById('result').style.display = 'block';
+        }
+        
+        function showLoading() {
+            hideMessages();
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('progressBar').style.display = 'block';
+            animateProgress();
+        }
+        
+        function animateProgress() {
+            const progressFill = document.getElementById('progressFill');
+            let width = 0;
+            const interval = setInterval(() => {
+                width += Math.random() * 15;
+                if (width > 90) width = 90;
+                progressFill.style.width = width + '%';
+            }, 200);
+            
+            return interval;
+        }
+        
+        async function parseFile() {
+            if (!selectedFile) return;
+            
+            showLoading();
+            parseBtn.disabled = true;
+            
+            try {
+                const htmlContent = await readFileContent(selectedFile);
+                const parsedData = parseScratchData(htmlContent);
+                
+                if (parsedData.length === 0) {
+                    showError('No match data found in the HTML file. Please check if it contains UTR scorecard data.');
+                    return;
+                }
+                
+                const csvContent = convertToCSV(parsedData);
+                downloadCSV(csvContent, 'utr_matches.csv');
+                
+                showResult(`Successfully parsed ${parsedData.length} matches! CSV download started.`);
+                
+            } catch (error) {
+                console.error('Parsing error:', error);
+                showError('Error parsing the file. Please ensure it\'s a valid UTR HTML file.');
+            } finally {
+                parseBtn.disabled = false;
+                document.getElementById('progressFill').style.width = '100%';
+            }
+        }
+        
+        function readFileContent(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (e) => resolve(e.target.result);
+                reader.onerror = (e) => reject(e);
+                reader.readAsText(file);
+            });
+        }
+        
+        function parseScratchData(htmlContent) {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(htmlContent, 'text/html');
+            
+            const divs = doc.querySelectorAll('div.utr-card.score-card.false');
+            const data = [];
+            
+            divs.forEach(div => {
+                const teamDivs = div.querySelectorAll('div.team.aic');
+                
+                if (teamDivs.length === 0) return;
+                
+                const match = [];
+                
+                // Find match date
+                const dateDiv = div.querySelector('span.scorecard__dateTimeText__1n0hM');
+                if (dateDiv) {
+                    const dateString = dateDiv.textContent.trim();
+                    const dateParts = dateString.split('|');
+                    if (dateParts.length >= 2) {
+                        const timePart = dateParts[0].trim();
+                        const datePart = dateParts[1].trim();
+                        const matchDate = `${datePart} ${timePart}`;
+                        match.push(matchDate);
+                    } else {
+                        match.push('Unknown Date');
+                    }
+                } else {
+                    match.push('');
+                }
+                
+                teamDivs.forEach(teamDiv => {
+                    const thisResult = [];
+                    
+                    // Get player name
+                    const playerNameEl = teamDiv.querySelector('a.player-name');
+                    if (playerNameEl) {
+                        thisResult.push(playerNameEl.textContent.trim());
+                    }
+                    
+                    // Get player UTR
+                    const playerUtrEl = teamDiv.querySelector('div.utr');
+                    if (playerUtrEl) {
+                        thisResult.push(playerUtrEl.textContent.trim());
+                    }
+                    
+                    // Get scores
+                    const scoresContainers = teamDiv.querySelectorAll('div.scores-conatiner');
+                    const gameScores = [];
+                    
+                    scoresContainers.forEach(scoreDiv => {
+                        const scoreItems = scoreDiv.querySelectorAll('div.score-item');
+                        scoreItems.forEach(item => {
+                            let score = item.textContent.trim();
+                            if (score.length > 1) {
+                                score = score[0];
+                            }
+                            gameScores.push(score);
+                        });
+                    });
+                    
+                    thisResult.push(gameScores);
+                    match.push(thisResult);
+                });
+                
+                if (match.length > 0) {
+                    data.push(match);
+                }
+            });
+            
+            return data;
+        }
+        
+        function convertToCSV(data) {
+            const headers = ['Date', 'Player', 'Opponent'];
+            let csvContent = headers.join(',') + '\n';
+            
+            data.forEach(match => {
+                const date = match[0] || '';
+                const player1 = match[1] || [];
+                const player2 = match[2] || [];
+                
+                if (player1.length >= 2 && player2.length >= 2) {
+                    // Player 1's perspective
+                    const p1Name = player1[0] || '';
+                    const p1UTR = player1[1] || '';
+                    const p1Scores = Array.isArray(player1[2]) ? player1[2].join(',') : '';
+                    
+                    const p2Name = player2[0] || '';
+                    const p2UTR = player2[1] || '';
+                    const p2Scores = Array.isArray(player2[2]) ? player2[2].join(',') : '';
+                    
+                    const player1Info = `"${p1Name} (UTR: ${p1UTR}) [${p1Scores}]"`;
+                    const player2Info = `"${p2Name} (UTR: ${p2UTR}) [${p2Scores}]"`;
+                    
+                    csvContent += `"${date}",${player1Info},${player2Info}\n`;
+                }
+            });
+            
+            return csvContent;
+        }
+        
+        function downloadCSV(csvContent, filename) {
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            
+            if (link.download !== undefined) {
+                const url = URL.createObjectURL(blob);
+                link.setAttribute('href', url);
+                link.setAttribute('download', filename);
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+        }
+    </script>
+</body>
+</html>
