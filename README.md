@@ -15,7 +15,9 @@ Step 1: Get Your UTR HTML File
 - Save the page as an HTML file:
 
   Chrome/Edge: Right-click → "Save as" → Choose "Webpage, Complete"
+  
   Firefox: Right-click → "Save Page As" → Choose "Web Page, complete"
+  
   Safari: File menu → "Save As" → Choose "Web Archive"
 
 Step 2: Upload and Parse
